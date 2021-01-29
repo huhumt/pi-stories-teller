@@ -1,11 +1,11 @@
 #!/usr/bin/bash
 
+root_directory=$(eval echo ~${SUDO_USER})
+config_json_filename="$root_directory/.podfox.json"
+path_filename="$root_directory/Music/podcast"
+
 create_config_file()
 {
-    local root_directory=$(eval echo ~${SUDO_USER})
-    local config_json_filename="$root_directory/.podfox.json"
-    local path_filename="$root_directory/Music/podcast"
-
     if [[ ! -f "$config_json_filename" ]]
     then
         printf "{\n    \"podcast-directory\" : \""%s"\",\n    \"maxnum\"            : 5\n}" "$path_filename" > "$config_json_filename"
@@ -17,12 +17,88 @@ create_config_file()
     fi
 }
 
+check_time()
+{
+    local hour=$(date +%H)
+    local int_hour=$(echo "$hour" | sed 's/^0*//')
+
+    if [[ "$int_hour" -lt 10 ]]
+    then
+        echo "in the morning"
+    elif [[ "$int_hour" -lt 15 ]]
+    then
+        echo "at noon"
+    elif [[ "int_hour" -lt 19 ]]
+    then
+        echo "in the afternoon"
+    else
+        echo "at night"
+    fi
+}
+
+play_audio_file()
+{
+    local audio_file_type=( "*.mp3" "*.ogg" "*.wav" "*.m4a" )
+    local audio_file_array=()
+    local audio_file
+
+    for audio_file in ${audio_file_type[@]}
+    do
+        audio_file_array+=$(find "$path_filename" -name "$audio_file")
+    done
+
+    echo "---hahah---${#audio_file_type[@]}"
+    echo "$audio_file_type"
+    echo "---hahah---${#audio_file_array[@]}"
+    echo "$audio_file_array"
+}
+
+remove_audio_file()
+{
+    local audio_file_type=( "*.mp3" "*.ogg" "*.wav" "*.m4a" )
+    local audio_file
+
+    for audio_file in ${audio_file_type[@]}
+    do
+        find "$path_filename" -name "$audio_file" -exec rm -fr {} \;
+    done
+}
+
 download_podcast()
 {
-    python ./src/main.py import "$1"
+    local podcast_url_list=(
+        "http://www.ximalaya.com/album/257813.xml"
+        "https://news.un.org/feed/subscribe/zh/audio-product/all/audio-rss.xml"
+        "https://open.firstory.me/rss/user/ckgvv1m2ah8re0903njm7tcun"
+        "https://api.soundon.fm/v2/podcasts/38cf0c12-46f7-4012-bcfb-34d85c98ab77/feed.xml"
+        "https://open.firstory.me/rss/user/ckesn2sbvx5060839umop16go"
+        "http://www.ximalaya.com/album/9329526.xml"
+        "https://api.soundon.fm/v2/podcasts/0cb16276-249c-4d9d-834a-bbbaf7a51cc7/feed.xml"
+    )
+    local url
+
+    for url in ${podcast_url_list[@]}
+    do
+        echo "$url"
+        python ./src/main.py import "$url"
+    done
+
     python ./src/main.py update
-    python ./src/main.py download
+    python ./src/main.py download --how-many=1
+}
+
+create_task()
+{
+    local cur_time=$(check_time)
+
+    play_audio_file
+
+    if [ "$cur_time" == "at night" ]
+    then
+        remove_audio_file
+        download_podcast
+    fi
 }
 
 create_config_file
-download_podcast "$1"
+create_task

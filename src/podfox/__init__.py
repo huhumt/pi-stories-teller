@@ -83,6 +83,10 @@ def import_feed(url, shortname=''):
     #get the feed.
     d = feedparser.parse(url)
 
+    if not d:
+        print_err('fail to parser {}'.format(url))
+        exit(-1)
+
     if shortname:
         folder = get_folder(shortname)
         if os.path.exists(folder):
@@ -140,6 +144,11 @@ def update_feed(feed):
     episodes into our local config.
     '''
     d = feedparser.parse(feed['url'])
+
+    if not d:
+        print_err('fail to parser {}'.format(url))
+        exit(-1)
+
     #only append new episodes!
     for episode in episodes_from_feed(d):
         found = False
@@ -194,8 +203,8 @@ def download_multiple(feed, maxnum):
         if maxnum == 0:
             break
         if not episode['downloaded']:
-            download_single(feed['shortname'], episode['url'])
-            episode['downloaded'] = True
+            if download_single(feed['shortname'], episode['url']) == 0:
+                episode['downloaded'] = True
             maxnum -= 1
     overwrite_config(feed)
 
@@ -217,13 +226,24 @@ def download_single(folder, url):
     start = time.perf_counter()
     dl = 0
     with open(os.path.join(base, folder, filename), 'wb') as f:
-        for chunk in r.iter_content(chunk_size=1024**2):
-            f.write(chunk)
-            dl += len(chunk)
-            done = int(50 * dl / total_length)
-            sys.stdout.write("\r[%s%s] %dM %.1fkb/s" % ('=' * done, ' ' * (50-done), dl/(1024*1024), dl/((time.perf_counter() - start)*1024)))
-            sys.stdout.flush()
-    print("\ndone.")
+        try:
+            for chunk in r.iter_content(chunk_size=1024**2):
+                f.write(chunk)
+                dl += len(chunk)
+                done = int(50 * dl / total_length)
+                spent_time = time.perf_counter() - start
+
+                if spent_time > 300: # spent more than 5 minutes
+                    print("\t---too slow speed, quit now.")
+                    return -1
+                else:
+                    sys.stdout.write("\r[%s%s] %5dM %7.1fkb/s" % ('=' * done, ' ' * (50-done), dl/(1024**2), dl/(spent_time*1024)))
+                    sys.stdout.flush()
+        except:
+            print("fail to get response from server")
+            return -1
+    print("\t---done.")
+    return 0
 
 
 def available_feeds():
