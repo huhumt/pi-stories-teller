@@ -1,4 +1,4 @@
-#!/usr/bin/bash
+#!/bin/bash
 
 root_directory=$(eval echo ~${SUDO_USER})
 config_json_filename="$root_directory/.podfox.json"
@@ -47,10 +47,10 @@ play_audio_file()
         audio_file_array+=$(find "$path_filename" -name "$audio_file")
     done
 
-    echo "---hahah---${#audio_file_type[@]}"
-    echo "$audio_file_type"
-    echo "---hahah---${#audio_file_array[@]}"
-    echo "$audio_file_array"
+    for audio_file in ${audio_file_array[@]}
+    do
+        mplayer "$audio_file"
+    done
 }
 
 remove_audio_file()
@@ -68,23 +68,22 @@ download_podcast()
 {
     local podcast_url_list=(
         "http://www.ximalaya.com/album/257813.xml"
-        "https://news.un.org/feed/subscribe/zh/audio-product/all/audio-rss.xml"
+        #"https://news.un.org/feed/subscribe/zh/audio-product/all/audio-rss.xml"
         "https://open.firstory.me/rss/user/ckgvv1m2ah8re0903njm7tcun"
         "https://api.soundon.fm/v2/podcasts/38cf0c12-46f7-4012-bcfb-34d85c98ab77/feed.xml"
         "https://open.firstory.me/rss/user/ckesn2sbvx5060839umop16go"
         "http://www.ximalaya.com/album/9329526.xml"
         "https://api.soundon.fm/v2/podcasts/0cb16276-249c-4d9d-834a-bbbaf7a51cc7/feed.xml"
     )
-    local url
+    local i
 
-    for url in ${podcast_url_list[@]}
+    for i in $(seq 1 ${#podcast_url_list[@]})
     do
-        echo "$url"
-        python ./src/main.py import "$url"
+        python3 ./src/main.py import "${podcast_url_list[i-1]}" "podcast_00$i"
+        python3 ./src/main.py update "podcast_00$i"
     done
 
-    python ./src/main.py update
-    python ./src/main.py download --how-many=1
+    python3 ./src/main.py download --how-many=1
 }
 
 create_task()

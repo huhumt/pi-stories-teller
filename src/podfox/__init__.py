@@ -348,7 +348,7 @@ def main():
         if arguments['<shortname>']:
             feed = find_feed(arguments['<shortname>'])
             if feed:
-                print_green('updating {}'.format(feed['title']))
+                print_green('updating {}'.format(feed['title'].encode()))
                 update_feed(feed)
                 exit(0)
             else:
