@@ -39,13 +39,17 @@ check_time()
 play_audio_file()
 {
     local audio_file_type=( "*.mp3" "*.ogg" "*.wav" "*.m4a" )
+    local audio_file_string=""
     local audio_file_array=()
     local audio_file
 
     for audio_file in ${audio_file_type[@]}
     do
-        audio_file_array+=$(find "$path_filename" -name "$audio_file")
+        audio_file_string+=$(find "$path_filename" -name "$audio_file")
     done
+
+    audio_file_array=($audio_file_string)
+    audio_file_array=( $(shuf -e "${audio_file_array[@]}") )
 
     for audio_file in ${audio_file_array[@]}
     do
