@@ -98,10 +98,9 @@ create_task()
 
     if [ "$cur_time" == "at night" ]
     then
-        remove_audio_file
         download_podcast
     fi
 }
 
 create_config_file
-create_task
+create_task > /dev/null 2>&1

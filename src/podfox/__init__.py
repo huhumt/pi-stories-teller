@@ -126,7 +126,7 @@ def import_feed(url, shortname=''):
     #trawl all the entries, and find links to audio files.
     feed['episodes'] = episodes_from_feed(d)
     feed['shortname'] = shortname
-    feed['title'] = d['feed']['title']
+    feed['title'] = shortname #d['feed']['title']
     feed['url'] = url
     # write the configuration to a feed.json within the folder
     feed_file = get_feed_file(shortname)
@@ -219,7 +219,8 @@ def download_single(folder, url):
     filename = url.split('/')[-1]
     filename = filename.split('?')[0]
     tmp_list = filename.rsplit('.')
-    filename = tmp_list[0] + get_datetime_stamp() + '.' + tmp_list[-1]
+    #filename = tmp_list[0] + get_datetime_stamp() + '.' + tmp_list[-1]
+    filename = 'story_podcast.' + tmp_list[-1]
     r = requests.get(url, stream=True)
     total_length = int(r.headers.get('content-length'))
     print_green("{:s} downloading, len {:.3f}M".format(filename, total_length/(1024*1024)))
@@ -233,7 +234,7 @@ def download_single(folder, url):
                 done = int(50 * dl / total_length)
                 spent_time = time.perf_counter() - start
 
-                if spent_time > 300: # spent more than 5 minutes
+                if spent_time > 600: # spent more than 10 minutes
                     print("\t---too slow speed, quit now.")
                     return -1
                 else:
@@ -348,7 +349,7 @@ def main():
         if arguments['<shortname>']:
             feed = find_feed(arguments['<shortname>'])
             if feed:
-                print_green('updating {}'.format(feed['title'].encode()))
+                print_green('updating {}'.format(feed['title']))
                 update_feed(feed)
                 exit(0)
             else:
